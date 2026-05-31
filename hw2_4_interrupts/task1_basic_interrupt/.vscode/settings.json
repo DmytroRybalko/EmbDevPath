@@ -14,5 +14,6 @@
     "--background-index",
     "--query-driver=**",
     "--compile-commands-dir=/home/dmytro/Knowledge/EmbDev/EmbDevPath/hw2_4_interrupts/task1_basic_interrupt/build"
-  ]
+  ],
+  "idf.flashType": "UART"
 }
