@@ -1,13 +1,13 @@
  /*
- * Task 1: Basic GPIO Interrupt (no debounce)
+ * Task 2: Software Debounce Using a Timer (Time-Based)
  *
- * Wiring:
- *   GPIO_NUM_0 --> button --> GND
- *   (internal pull-up enabled)
+ * Add time-based debounce logic:
+ * - Ignore an interrupt if less than 50 ms has elapsed since the previous one.
+ * - Implement the debounce logic outside the ISR.
  *
- * Expected behaviour:
- *   - 1 physical press  -> multiple interrupts (bounce)
- *   - interrupt fires on release as well
+ * Expected Result:
+ * - Fewer false trigger events caused by button bouncing.
+ * - Trigger events may still occur when the button is released.
  */
 
 #include <stdio.h>
@@ -18,9 +18,10 @@
 #include "esp_timer.h"
 
 #define BUTTON_GPIO     GPIO_NUM_18   /* change to your pin */
-#define TAG             "TASK1"
+#define TAG             "TASK2"
+#define DEBOUNCE_TIME   150
 
-static volatile uint32_t isr_counter = 0;   /* incremented inside ISR */
+static volatile uint32_t isr_counter = 0;
 static volatile bool button_pressed = false;
 static volatile bool led_state = false;
 
@@ -30,7 +31,6 @@ static void IRAM_ATTR button_isr_handler(void *arg)
     button_pressed = true;
 }
 
-/* ── Main ────────────────────────────────────────────────────────────────────── */
 void app_main(void)
 {
     // Set led pin
@@ -55,20 +55,26 @@ void app_main(void)
     ESP_LOGI(TAG, "Task 1 started. Press the button and watch the counter.");
     ESP_LOGI(TAG,"Button GPIO: %d", BUTTON_GPIO);
 
+    uint64_t prev_time = 0;
     while (true) {
         if (button_pressed) {
-            uint32_t current = isr_counter;
-            led_state = !led_state;
-            
-            gpio_set_level(GPIO_NUM_15, led_state);
-
-            ESP_LOGI(TAG,
-                "%" PRIu32 ", BUTTON_GPIO = %d, LED state = %d",
-                current,
-                (int)gpio_get_level(BUTTON_GPIO),
-                (int)led_state);
             
             button_pressed = false;
+            uint64_t now = esp_timer_get_time();
+            
+            if ((now - prev_time) > (DEBOUNCE_TIME * 1000ULL)) {
+                uint32_t current = isr_counter;
+                led_state = !led_state;
+                gpio_set_level(GPIO_NUM_15, led_state);
+
+                ESP_LOGI(TAG,
+                     "ISR#%" PRIu32 ", BUTTON_GPIO = %d, debunce = %" PRIu64 "ms",
+                     current,
+                     gpio_get_level(BUTTON_GPIO),
+                     (now - prev_time) / 1000);
+            
+                prev_time = now;
+            }
         }
             
         vTaskDelay(pdMS_TO_TICKS(10));
