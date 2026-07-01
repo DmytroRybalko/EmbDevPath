@@ -4,7 +4,7 @@
   "idf.openOcdConfigs": [
     "board/esp32s3-builtin.cfg"
   ],
-  "idf.port": "detect",
+  "idf.port": "/dev/ttyUSB0",
   "idf.currentSetup": "/home/dmytro/.espressif/v6.0.1/esp-idf",
   "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
   "idf.customExtraVars": {
@@ -15,5 +15,6 @@
     "--background-index",
     "--query-driver=**",
     "--compile-commands-dir=/home/dmytro/Knowledge/EmbDev/EmbDevPath/hw4_1_uart/esp_uart_led/build"
-  ]
+  ],
+  "idf.flashType": "UART"
 }
