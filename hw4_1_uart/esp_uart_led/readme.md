@@ -1,0 +1,2 @@
+Project realised with ESP-IDF and contains code for guiding led on stm32 board via UART protocol.
+When button on esp32 is pressed the led on stm32 swith on, when button on stm32 is pressed then led is on on esp32 board.
