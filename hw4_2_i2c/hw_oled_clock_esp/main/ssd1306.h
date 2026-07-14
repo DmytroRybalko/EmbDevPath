@@ -12,10 +12,22 @@
  */
 esp_err_t ssd1306_setup(i2c_master_dev_handle_t dev_handle);
 
+/**
+ * @brief Clear the in-memory framebuffer (does not touch the display yet)
+ */
 void clear_framebuffer(void);
+
+/**
+ * @brief Push the whole framebuffer to the display over I2C.
+ *        Control byte 0x40 marks the following bytes as pixel data (Co=0, D/C#=1).
+ */
 
 esp_err_t ssd1306_flush(i2c_master_dev_handle_t dev_handle);
 
+/**
+ * @brief Render hours:minutes:seconds as text into the framebuffer.
+ *        Does NOT call ssd1306_flush() — caller decides when to push to display.
+ */
 void draw_time(int x, int y, uint8_t hours, uint8_t minutes, uint8_t seconds);
 
 /*
