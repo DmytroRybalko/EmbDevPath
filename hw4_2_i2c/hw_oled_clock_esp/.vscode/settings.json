@@ -1,0 +1,20 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.extensionActivationMode": "always",
+  "idf.openOcdConfigs": [
+    "board/esp32-wrover-kit-3.3v.cfg"
+  ],
+  "idf.port": "/dev/ttyUSB0",
+  "idf.currentSetup": "/home/dmytro/.espressif/v6.0.1/esp-idf",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32"
+  },
+  "clangd.path": "/home/dmytro/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=/home/dmytro/Knowledge/EmbDev/EmbDevPath/hw4_2_i2c/hw_oled_clock_esp/build"
+  ],
+  "idf.flashType": "UART"
+}
