@@ -7,11 +7,16 @@
 #define FONT_CHAR_HEIGHT          8
 
 /* Functions to be used in main.c */
+/**
+ * @brief Setup command buffer to display (control byte 0x00 + command bytes)
+ */
+esp_err_t ssd1306_setup(i2c_master_dev_handle_t dev_handle);
+
 void clear_framebuffer(void);
+
 esp_err_t ssd1306_flush(i2c_master_dev_handle_t dev_handle);
+
 void draw_time(int x, int y, uint8_t hours, uint8_t minutes, uint8_t seconds);
-void init_ssd1306(i2c_master_dev_handle_t dev_handle);
-void test_ssd1306(i2c_master_dev_handle_t dev_handle);
 
 /*
  

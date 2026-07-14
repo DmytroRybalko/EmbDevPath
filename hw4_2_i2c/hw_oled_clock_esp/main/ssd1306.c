@@ -14,7 +14,13 @@ static uint8_t framebuffer[FRAMEBUFFER_SIZE];
 
 static const char *TAG = "SSD1306";
 
-static uint8_t initCommands[] = {
+/**
+ * @brief Setup command buffer to display (control byte 0x00 + command bytes)
+ */
+esp_err_t ssd1306_setup(i2c_master_dev_handle_t dev_handle)
+{
+    uint8_t initCommands[] = {
+        SSD1306_REG_START,
         0xAE,        // DISPLAY OFF
         0xD5, 0x80,  // SET DISPLAY CLOCK DIV RATIO
         0xA8, 0x3F,  // SET MULTIPLEX RATIO
@@ -33,16 +39,7 @@ static uint8_t initCommands[] = {
         0xAF         // DISPLAY ON
     };
 
-/**
- * @brief Send command buffer to display (control byte 0x00 + command bytes)
- */
-esp_err_t ssd1306_send_cmd(i2c_master_dev_handle_t dev_handle, uint8_t *cmd, size_t len)
-{
-    uint8_t buf[len + 1]; // Buffer = control byte (0x00) + command bytes
-    buf[0] = SSD1306_REG_START; // 0x00 -> control byte, Co=0, D/C#=0 (command stream)
-    memcpy(&buf[1], cmd, len);
-
-    return i2c_master_transmit(dev_handle, buf, sizeof(buf), -1);
+    return i2c_master_transmit(dev_handle, initCommands, sizeof(initCommands), -1);
 }
 
 /**
@@ -85,11 +82,11 @@ esp_err_t ssd1306_set_addr_window(i2c_master_dev_handle_t dev_handle)
     esp_err_t ret;
 
     uint8_t col_cmd[] = { 0x21, 0x00, SSD1306_WIDTH - 1 };   // SET_COLUMN_ADDR: start=0, end=127
-    ret = ssd1306_send_cmd(dev_handle, col_cmd, sizeof(col_cmd));
+    ret = i2c_master_transmit(dev_handle, col_cmd, sizeof(col_cmd), -1);
     if (ret != ESP_OK) return ret;
 
     uint8_t page_cmd[] = { 0x22, 0x00, SSD1306_PAGES - 1 };  // SET_PAGE_ADDR: start=0, end=7
-    ret = ssd1306_send_cmd(dev_handle, page_cmd, sizeof(page_cmd));
+    ret = i2c_master_transmit(dev_handle, page_cmd, sizeof(page_cmd), -1);
     return ret;
 }
 
@@ -165,27 +162,4 @@ void draw_time(int x, int y, uint8_t hours, uint8_t minutes, uint8_t seconds)
     snprintf(time_str, sizeof(time_str), "%02u:%02u:%02u", hours, minutes, seconds);
 
     draw_string(x, y, time_str);
-}
-
-void init_ssd1306(i2c_master_dev_handle_t dev_handle)
-{
-    if (ssd1306_send_cmd(dev_handle, initCommands, sizeof(initCommands)) == ESP_OK) {
-        ESP_LOGI(TAG, "Successfully initial display!");
-    }
-
-    clear_framebuffer();
-    if (ssd1306_flush(dev_handle) == ESP_OK) {
-        ESP_LOGI(TAG, "Framebuffer flushed successfully");
-    }
-}
-
-void test_ssd1306(i2c_master_dev_handle_t dev_handle)
-{
-    // Draw static time
-    clear_framebuffer();
-    draw_time(34, 30, 16, 05, 37);   
-
-    if (ssd1306_flush(dev_handle) == ESP_OK) {
-        ESP_LOGI(TAG, "Time rendered on display");
-    }
 }
