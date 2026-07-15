@@ -4,21 +4,47 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "driver/i2c_master.h"
+#include "driver/uart.h"
 #include "ssd1306.h"
 #include "ds1307.h"
 
+/* I2C configuration */
 #define I2C_MASTER_SCL_IO           GPIO_NUM_4       /*!< GPIO number used for I2C master clock */
 #define I2C_MASTER_SDA_IO           GPIO_NUM_5       /*!< GPIO number used for I2C master data  */
 #define I2C_MASTER_NUM              I2C_NUM_0                   /*!< I2C port number for master dev */
-#define I2C_MASTER_FREQ_HZ          (100000)        /*!< I2C master clock frequency */
+#define I2C_MASTER_FREQ_HZ          100000        /*!< I2C master clock frequency */
 #define I2C_MASTER_TIMEOUT_MS       1000
-
 #define SSD1306_ADDR                0x3C            /*!< Address of the display */
 #define DS1307_ADDR                 0x68            /*!< Address of the clock */
 
+/* UART configuration */
+#define TX_PIN                      15
+#define RX_PIN                      16
+#define UART_BAUD_RATE              115200
+#define UART_NUM                    UART_NUM_1
+
+static const int RX_BUF_SIZE = 1024;
 static const char *OLED  = "OLED";
 static const char *CLOCK = "CLOCK";
 
+// UART config
+void uart_init(void)
+{
+    const uart_config_t uart_config = {
+        .baud_rate  = UART_BAUD_RATE,
+        .data_bits  = UART_DATA_8_BITS,
+        .parity     = UART_PARITY_DISABLE,
+        .stop_bits  = UART_STOP_BITS_1,
+        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
+    };
+    
+    uart_driver_install(UART_NUM, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
+    uart_param_config(UART_NUM, &uart_config);
+    uart_set_pin(UART_NUM, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+}
+
+// i2c bus config
 i2c_master_bus_config_t bus_config = {
         .i2c_port = I2C_MASTER_NUM,
         .sda_io_num = I2C_MASTER_SDA_IO,
@@ -113,17 +139,17 @@ static void test_ssd1306(i2c_master_dev_handle_t dev_handle)
 /**
  * @brief Display current time on display
  */
-static void time2display(i2c_master_dev_handle_t time_handle, i2c_master_dev_handle_t oled_handle)
+static void time2display(i2c_master_dev_handle_t time_handle)
 {
     ds1307_time_t current_time;
     if (ds1307_get_time(time_handle, &current_time) == ESP_OK) {
         // Draw static time
-        clear_framebuffer();
-        draw_time(34, 30, current_time.hour, current_time.min, current_time.sec);   
+        //clear_framebuffer();
+        draw_time(15, 20, current_time.hour, current_time.min, current_time.sec);   
 
-        if (ssd1306_flush(oled_handle) == ESP_OK) {
-            ESP_LOGI(OLED, "Time rendered on display");
-        }
+        // if (ssd1306_flush(oled_handle) == ESP_OK) {
+        //     ESP_LOGI(OLED, "Time rendered on display");
+        // }
 
         ESP_LOGI(CLOCK, "Date: 20%02d-%02d-%02d | Time: %02d:%02d:%02d (Day of Week: %d)",
                     current_time.year, current_time.month, current_time.day_of_month,
@@ -132,6 +158,22 @@ static void time2display(i2c_master_dev_handle_t time_handle, i2c_master_dev_han
     } else {
         ESP_LOGE(CLOCK, "Failed reading data payloads over active I2C parameters.");
     }
+}
+
+static void uart2display()
+{
+    static char buf[4] = "?";
+
+    uint8_t data[16] = {0}; // set buffer for reading from reciver
+    int rxBytes = uart_read_bytes(UART_NUM_1, data, sizeof(data) - 1, pdMS_TO_TICKS(100));
+    if (rxBytes > 0) {
+        data[rxBytes] = 0;
+        ESP_LOGI("UART", "Read %d bytes: %s", rxBytes, data);
+        snprintf(buf, sizeof(buf), "%c%c%%", data[0], data[1]);
+    }
+    
+    draw_string(15, 30, "Light: ");
+    draw_string(65, 30, buf);
 }
 
 void app_main(void)
@@ -157,8 +199,15 @@ void app_main(void)
     ds1307_initialize(ds1307_handle);
     //test_ds1307(ds1307_handle);
 
+    uart_init();
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    uart_flush(UART_NUM);    
+    
     while(1){
-        time2display(ds1307_handle, ssd1306_handle);
+        clear_framebuffer();
+        time2display(ds1307_handle);
+        uart2display();
+        ssd1306_flush(ssd1306_handle);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

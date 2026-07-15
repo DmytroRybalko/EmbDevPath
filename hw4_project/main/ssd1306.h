@@ -30,6 +30,12 @@ esp_err_t ssd1306_flush(i2c_master_dev_handle_t dev_handle);
  */
 void draw_time(int x, int y, uint8_t hours, uint8_t minutes, uint8_t seconds);
 
+/**
+ * @brief Draw a null-terminated ASCII string starting at (x, y),
+ *        advancing by FONT_CHAR_WIDTH pixels per character.
+ */
+void draw_string(int x, int y, const char *str);
+
 /*
  
    Constant: font8x8_latin_tr
