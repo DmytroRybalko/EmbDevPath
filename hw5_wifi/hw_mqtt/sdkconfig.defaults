@@ -1,0 +1,10 @@
+# Enable the built-in certificate bundle for TLS server verification
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=no-loc:
+- 
+# Hard-coded credentials
+CONFIG_EXAMPLE_WIFI_SSID="TP-LINK_54D0"
+CONFIG_EXAMPLE_WIFI_PASSWORD="fixDag-5vophi-cudfeg"
+
+# Optional but commonly needed for WPA2 networks
+CONFIG_EXAMPLE_WIFI_AUTH_WPA2_PSK=y
