@@ -1,12 +1,8 @@
 #include <stdio.h>
-#include <string.h>
-#include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-#include "esp_rom_sys.h"
 #include "driver/i2c_master.h"
-#include "bme280_defs.h"
 #include "bme280.h"
 #include "bme_280.h"
 #include <ssd1306.h>
@@ -20,7 +16,8 @@
 
 #define BME280_ADDR                 0x76            /*!< Address of the bme280 sensor */
 
-static const char *TAG = "BME280";
+static const char *OLED = "SSD1306";
+static const char *BME = "BME280";
 
 // i2c master bus config
 i2c_master_bus_config_t bus_config = {
@@ -45,39 +42,26 @@ i2c_device_config_t bme280_config = {
  * @param handle SSD1306 device handle.
  * @return printed to console.
  */
-void ssd1306_display_bme280(ssd1306_handle_t dev_hdl, struct bme280_data *comp_data, struct bme280_dev *dev_data)
+void ssd1306_display_bme280(ssd1306_handle_t dev_hdl, struct bme280_data *comp_data)
 {
-    /* Read compensated data */
-    int8_t rslt = bme280_get_sensor_data(BME280_ALL, comp_data, dev_data);
-    if (rslt == BME280_OK) {
-        ESP_LOGI(TAG, "T = %0.1f(deg C); P = %0.1f(Pa); H = %0.1f(%%)", \
-            comp_data->temperature, \
-            comp_data->pressure, \
-            comp_data->humidity \
-        );
-    } else {
-        ESP_LOGE(TAG, "read data failed: %d", rslt);
-    };
-    
     // Define buffer to save converted to chars values
     char text[16 + 1];
 
-    // Display text
-    //ESP_LOGI(TAG, "Display Text");
+    // Display Text
     ssd1306_clear_display(dev_hdl, false);
     ssd1306_set_contrast(dev_hdl, 0xff);
     ssd1306_display_text(dev_hdl, 0, "SSD1306 128x64", false);
     
     // Convert temperature to string
-    snprintf(text, sizeof text, "T: %6.1f C", comp_data->temperature);
+    snprintf(text, sizeof text, "T: %4.1f\xB0" "C", comp_data->temperature);
     ssd1306_display_text(dev_hdl, 2, text, false);
     
     // Convert pressure to string
-    snprintf(text, sizeof text, "P: %6.1f hPa", comp_data->pressure);
+    snprintf(text, sizeof text, "P: %4.1f MPa", comp_data->pressure / 1000.0f);
     ssd1306_display_text(dev_hdl, 4, text, false);
     
     // Convert humidity to string
-    snprintf(text, sizeof text, "H: %6.1f %%", comp_data->humidity);
+    snprintf(text, sizeof text, "H: %4.1f %%", comp_data->humidity);
     ssd1306_display_text(dev_hdl, 6, text, false);
 };
 
@@ -105,18 +89,32 @@ void app_main(void)
     // Init ssd1306 oled
     ssd1306_init(bus_handle, &ssd1306_config, &ssd1306_handle);
     if (ssd1306_handle == NULL) {
-        ESP_LOGE(TAG, "ssd1306 handle init failed");
+        ESP_LOGE(OLED, "ssd1306 handle init failed");
         assert(ssd1306_handle);
     }
     
     // Init bme280 sensor
     init_bme280(bme280_handle, &s_bme280);
     
+    // Main loop for reading and displaying temperature, pressure and humidity data
     while (true) {
-    
-        // Display temperature, pressure and humidity on ssd1306
-        ssd1306_display_bme280(ssd1306_handle, &comp_data, &s_bme280);
-
+        /* Read compensated data */
+        int8_t rslt = bme280_get_sensor_data(BME280_ALL, &comp_data, &s_bme280);
+        if (rslt == BME280_OK) {
+            
+            // Display temperature, pressure and humidity on ssd1306
+            ssd1306_display_bme280(ssd1306_handle, &comp_data);
+            
+            // Log same data to terminal
+            ESP_LOGI(BME, "T = %0.1f(deg C); P = %0.1f(MPa); H = %0.1f(%%)", \
+                comp_data.temperature, \
+                comp_data.pressure / 1000.0f, \
+                comp_data.humidity \
+            );
+        } else {
+            ESP_LOGE(BME, "read data failed: %d", rslt);
+        };
+        
         vTaskDelay(pdMS_TO_TICKS(5000));
     }
     

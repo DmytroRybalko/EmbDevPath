@@ -1,13 +1,8 @@
-#include <stdio.h>
 #include <string.h>
-#include "sdkconfig.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "esp_log.h"
 #include "esp_rom_sys.h"
 #include "driver/i2c_master.h"
 #include "bme280.h"
-#include "bme280_defs.h"
 
 /**
  * @brief Read a sequence of bytes from a bme280 sensor registers
@@ -47,7 +42,7 @@ static void bme280_delay_us(uint32_t period, void *intf_ptr)
     esp_rom_delay_us(period);
 }
 
-uint8_t init_bme280(i2c_master_dev_handle_t dev_hdl, struct bme280_dev *dev_data)
+int8_t init_bme280(i2c_master_dev_handle_t dev_hdl, struct bme280_dev *dev_data)
 {   
     // Structure for settings
     struct bme280_settings settings = {0};
@@ -95,9 +90,9 @@ uint8_t init_bme280(i2c_master_dev_handle_t dev_hdl, struct bme280_dev *dev_data
     // Return error if not success
     if (rslt != BME280_OK) {
         ESP_LOGE("BME280", "init failed: %d", rslt);
-        return rslt; 
     }
-    return 0;
+    
+    return rslt;
 }
 
 /**
