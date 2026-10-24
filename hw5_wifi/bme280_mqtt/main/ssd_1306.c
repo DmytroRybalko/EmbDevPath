@@ -11,23 +11,23 @@ Here is test files for ssd1306 oled display driver from K0I05 (see components)
 void ssd1306_test(ssd1306_handle_t dev_hdl)
 {
     for ( ;; ) {
-        ESP_LOGI(TAG, "######################## SSD1306 - START #########################");
+        ESP_LOGI("SSD1306", "######################## SSD1306 - START #########################");
         //
         int center = 1, top = 1, bottom = 4;
         char lineChar[16];
         uint8_t image[24];
 
-        ESP_LOGI(TAG, "Panel is 128x64");
+        ESP_LOGI("SSD1306", "Panel is 128x64");
 
         // Display x3 text
-        ESP_LOGI(TAG, "Display x3 Text");
+        ESP_LOGI("SSD1306", "Display x3 Text");
         ssd1306_clear_display(dev_hdl, false);
         ssd1306_set_contrast(dev_hdl, 0xff);
         ssd1306_display_text_x3(dev_hdl, 0, "Hello", false);
         vTaskDelay(3000 / portTICK_PERIOD_MS);
 
         // Display x2 text
-        ESP_LOGI(TAG, "Display x2 Text");
+        ESP_LOGI("SSD1306", "Display x2 Text");
         ssd1306_clear_display(dev_hdl, false);
         ssd1306_set_contrast(dev_hdl, 0xff);
         ssd1306_display_text_x2(dev_hdl, 0, "{xTEXTx}", false);
@@ -35,7 +35,7 @@ void ssd1306_test(ssd1306_handle_t dev_hdl)
         vTaskDelay(3000 / portTICK_PERIOD_MS);
 
         // Display text
-        ESP_LOGI(TAG, "Display Text");
+        ESP_LOGI("SSD1306", "Display Text");
         ssd1306_clear_display(dev_hdl, false);
         ssd1306_set_contrast(dev_hdl, 0xff);
         ssd1306_display_text(dev_hdl, 0, "SSD1306 128x64", false);
@@ -45,7 +45,7 @@ void ssd1306_test(ssd1306_handle_t dev_hdl)
         vTaskDelay(3000 / portTICK_PERIOD_MS);
         
         // Display Count Down
-        ESP_LOGI(TAG, "Display Count Down");
+        ESP_LOGI("SSD1306", "Display Count Down");
         memset(image, 0, sizeof(image));
         ssd1306_display_image(dev_hdl, top, (6*8-1), image, sizeof(image));
         ssd1306_display_image(dev_hdl, top+1, (6*8-1), image, sizeof(image));
@@ -60,7 +60,7 @@ void ssd1306_test(ssd1306_handle_t dev_hdl)
         };
         
         //
-        ESP_LOGI(TAG, "######################## SSD1306 - END ###########################");
+        ESP_LOGI("SSD1306", "######################## SSD1306 - END ###########################");
         //
         //
         // pause the task per defined wait period
@@ -86,7 +86,7 @@ void ssd1306_test_display_data(ssd1306_handle_t dev_hdl)
     
     while (true) {
         // Display text
-        ESP_LOGI(TAG, "Display Text");
+        ESP_LOGI("SSD1306", "Display Text");
         ssd1306_clear_display(dev_hdl, false);
         ssd1306_set_contrast(dev_hdl, 0xff);
         ssd1306_display_text(dev_hdl, 0, "SSD1306 128x64", false);
