@@ -7,6 +7,7 @@
 #include "bme_280.h"
 #include <ssd1306.h>
 #include "font_latin_8x8.h"
+#include "mqtt_app.h"
 
 #define I2C_MASTER_SCL_IO           GPIO_NUM_4       /*!< GPIO number used for I2C master clock */
 #define I2C_MASTER_SDA_IO           GPIO_NUM_5       /*!< GPIO number used for I2C master data  */
@@ -95,6 +96,10 @@ void app_main(void)
     
     // Init bme280 sensor
     init_bme280(bme280_handle, &s_bme280);
+
+    // Activate mqqt connection
+
+    mqtt_app_main();
     
     // Main loop for reading and displaying temperature, pressure and humidity data
     while (true) {
@@ -106,11 +111,11 @@ void app_main(void)
             ssd1306_display_bme280(ssd1306_handle, &comp_data);
             
             // Log same data to terminal
-            ESP_LOGI(BME, "T = %0.1f(deg C); P = %0.1f(MPa); H = %0.1f(%%)", \
+            /*ESP_LOGI(BME, "T = %0.1f(deg C); P = %0.1f(MPa); H = %0.1f(%%)", \
                 comp_data.temperature, \
                 comp_data.pressure / 1000.0f, \
                 comp_data.humidity \
-            );
+            );*/
         } else {
             ESP_LOGE(BME, "read data failed: %d", rslt);
         };
