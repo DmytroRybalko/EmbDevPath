@@ -3,10 +3,13 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "driver/i2c_master.h"
+
 #include "bme280.h"
 #include "bme_280.h"
+
 #include <ssd1306.h>
 #include "font_latin_8x8.h"
+
 #include "mqtt_app.h"
 
 #define I2C_MASTER_SCL_IO           GPIO_NUM_4       /*!< GPIO number used for I2C master clock */
@@ -66,6 +69,24 @@ void ssd1306_display_bme280(ssd1306_handle_t dev_hdl, struct bme280_data *comp_d
     ssd1306_display_text(dev_hdl, 6, text, false);
 };
 
+void mqtt_publish_data(struct bme280_data *comp_data)
+{
+    // Define buffer to save converted to chars values
+    char text[20];
+    
+    // Convert temperature to string
+    sprintf(text, "T: %.1f\xC2\xB0" "C", comp_data->temperature);
+    mqtt_app_publish("dmytro/esp32/temperature", text);
+    
+    // Convert pressure to string
+    snprintf(text, sizeof text, "P: %.1f MPa", comp_data->pressure / 1000.0f);
+    mqtt_app_publish("dmytro/esp32/pressure", text);
+
+    // Convert humidity to string
+    snprintf(text, sizeof text, "H: %.1f %%", comp_data->humidity);
+    mqtt_app_publish("dmytro/esp32/humidity", text);
+};
+
 void app_main(void)
 {
     // Structure for storing data from sensor
@@ -98,9 +119,8 @@ void app_main(void)
     init_bme280(bme280_handle, &s_bme280);
 
     // Activate mqqt connection
+    mqtt_app_start();
 
-    mqtt_app_main();
-    
     // Main loop for reading and displaying temperature, pressure and humidity data
     while (true) {
         /* Read compensated data */
@@ -109,6 +129,9 @@ void app_main(void)
             
             // Display temperature, pressure and humidity on ssd1306
             ssd1306_display_bme280(ssd1306_handle, &comp_data);
+            
+            // Publish temperature, pressure and humidity to mqtt server
+            mqtt_publish_data(&comp_data);
             
             // Log same data to terminal
             /*ESP_LOGI(BME, "T = %0.1f(deg C); P = %0.1f(MPa); H = %0.1f(%%)", \
@@ -122,9 +145,5 @@ void app_main(void)
         
         vTaskDelay(pdMS_TO_TICKS(5000));
     }
-    
-    // TEST ZONE
-    //ssd1306_test(ssd1306_handle);
-    //ssd1306_test_display_data(ssd1306_handle);
 }
 
